@@ -95,8 +95,20 @@ def test1(page: Page):
 def test2(page: Page):
     page.goto("https://automationexercise.com")
     expect(page).to_have_title("Automation Exercise")
-    signup_heading = page.get_by_role("heading", name="New User Signup!")
-    expect(signup_heading).to_be_visible()
+    page.get_by_role("link", name="Signup / Login").click()
+    #signup_heading = page.get_by_role("heading", name="Login to your account")
+    expect(page.get_by_role("heading", name="Login to your account")).to_be_visible()
+    
+    page.locator(".login-form [data-qa='login-email']").fill("maildeprueba12345@gmail.com")
+    page.get_by_placeholder("Password").fill("hola123")
+
+    page.get_by_role("button", name="Login").click()
+
+    expect(page.get_by_text("Logged in as Juan")).to_be_visible()
+    page.get_by_role("link", name="Delete Account").click()
+    expect(page.get_by_role("heading", name="ACCOUNT DELETED!", exact=False)).to_be_visible()
+
+    
 
     
 """ Test Case 3: Login User with incorrect email and password

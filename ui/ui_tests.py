@@ -121,8 +121,17 @@ def test2(page: Page):
         7. Click 'login' button
         8. Verify error 'Your email or password is incorrect!' is visible
 """
-#def test3(page: Page):
-#    page.goto("https://automationexercise.com")
+def test3(page: Page):
+    page.goto("https://automationexercise.com")
+    expect(page).to_have_title("Automation Exercise")
+    page.get_by_role("link", name="Signup / Login").click()
+    expect(page.get_by_role("heading", name="Login to your account")).to_be_visible()
+    page.locator(".login-form [data-qa='login-email']").fill("mailtest@gmail.com")
+    page.get_by_placeholder("Password").fill("12")  
+    page.get_by_role("button", name="Login").click()
+    expect(page.get_by_text("Your email or password is incorrect!")).to_be_visible()
+
+
 
 
 """ Test Case 4: Logout User
@@ -137,8 +146,18 @@ def test2(page: Page):
         9. Click 'Logout' button
         10. Verify that user is navigated to login page
 """
-#def test4(page: Page):
-#    page.goto("https://automationexercise.com")
+def test4(page: Page):
+    page.goto("https://automationexercise.com")
+    expect(page).to_have_title("Automation Exercise")
+    page.get_by_role("link", name="Signup / Login").click()
+    expect(page.get_by_role("heading", name="Login to your account")).to_be_visible()
+    page.locator(".login-form [data-qa='login-email']").fill("maildeprueba12345@gmail.com")
+    page.get_by_placeholder("Password").fill("hola1234")
+    page.get_by_role("button", name="Login").click()
+    expect(page.get_by_text("Logged in as Juan")).to_be_visible()
+    page.get_by_role("link", name="Logout").click()
+    expect(page).to_have_title("Automation Exercise - Signup / Login")
+
 
 
 """ Test Case 5: Register User with existing email
@@ -151,8 +170,16 @@ def test2(page: Page):
         7. Click 'Signup' button
         8. Verify error 'Email Address already exist!' is visible
 """
-#def test5(page: Page):
-#    page.goto("https://automationexercise.com")
+def test5(page: Page):
+    page.goto("https://automationexercise.com")
+    expect(page).to_have_title("Automation Exercise")
+    page.get_by_role("link", name="Signup / Login").click()
+    expect(page.get_by_role("heading", name="New User Signup!")).to_be_visible()
+    page.get_by_placeholder("Name").fill("Juan")
+    page.locator(".signup-form [data-qa='signup-email']").fill("maildeprueba12345@gmail.com")
+    page.get_by_role("button", name="Signup").click()
+    expect(page.get_by_text("Email Address already exist!")).to_be_visible()
+
 
 
 """ Test Case 6: Contact Us Form
@@ -168,8 +195,23 @@ def test2(page: Page):
         10. Verify success message 'Success! Your details have been submitted successfully.' is visible
         11. Click 'Home' button and verify that landed to home page successfully
 """
-#def test6(page: Page):
-#    page.goto("https://automationexercise.com")
+def test6(page: Page):
+    page.goto("https://automationexercise.com")
+    expect(page).to_have_title("Automation Exercise")   
+    page.get_by_role("link", name="Contact us").click()
+    expect(page.get_by_role("heading", name="GET IN TOUCH")).to_be_visible()
+    page.get_by_placeholder("Name").fill("Juan")
+    page.get_by_placeholder("Email", exact=True).fill("tu_mail@test.com")    
+    page.get_by_placeholder("Subject").fill("Subject")
+    page.get_by_placeholder("Message").fill("Message")
+
+    page.set_input_files('input[name="upload_file"]', "/Users/juangozzi/Documents/Proyectos/automation-tests-exsercise/automation-tests-exercise/ui/file.txt")
+
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.get_by_role("button", name="Submit").click()
+    expect(page.locator(".status.alert-success")).to_be_visible()    
+    page.get_by_role("link", name="Home").nth(1).click()
+
 
 
 """ Test Case 7: Verify Test Cases Page
@@ -179,8 +221,14 @@ def test2(page: Page):
         4. Click on 'Test Cases' button
         5. Verify user is navigated to test cases page successfully
 """
-#def test7(page: Page):
-#    page.goto("https://automationexercise.com")
+def test7(page: Page):
+    page.goto("https://automationexercise.com")
+    expect(page).to_have_title("Automation Exercise")  
+    page.get_by_role("link", name="Test Cases").click()
+
+# esto se puede hacer todo lo exhaustivo que quieras
+
+
 
 
 """ Test Case 8: Verify All Products and product detail page

@@ -1,4 +1,7 @@
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, expect, Browser
+from utils import check, create_user
+import random
+import re
 
 """ Test Case 1: Register User
         1. Launch browser
@@ -109,7 +112,6 @@ def test2(page: Page):
     expect(page.get_by_role("heading", name="ACCOUNT DELETED!", exact=False)).to_be_visible()
 
     
-
     
 """ Test Case 3: Login User with incorrect email and password
         1. Launch browser
@@ -130,7 +132,6 @@ def test3(page: Page):
     page.get_by_placeholder("Password").fill("12")  
     page.get_by_role("button", name="Login").click()
     expect(page.get_by_text("Your email or password is incorrect!")).to_be_visible()
-
 
 
 
@@ -224,10 +225,10 @@ def test6(page: Page):
 def test7(page: Page):
     page.goto("https://automationexercise.com")
     expect(page).to_have_title("Automation Exercise")  
-    page.get_by_role("link", name="Test Cases").click()
-
-# esto se puede hacer todo lo exhaustivo que quieras
-
+    page.get_by_role("link", name="Test Cases").nth(0).click()
+    if "#google_vignette" in page.url:
+        page.goto("https://automationexercise.com/test_cases")
+    expect(page.locator("h2:has-text('Test Cases')")).to_be_visible()
 
 
 
@@ -242,8 +243,23 @@ def test7(page: Page):
         8. User is landed to product detail page
         9. Verify that detail detail is visible: product name, category, price, availability, condition, brand
 """
-#def test8(page: Page):
-#    page.goto("https://automationexercise.com")
+def test8(page: Page):
+    page.goto("https://automationexercise.com")
+    if "#google_vignette" in page.url:
+        page.goto("https://automationexercise.com/test_cases")
+    expect(page).to_have_title("Automation Exercise")  
+    page.get_by_role("link", name="Products").click()
+    expect(page).to_have_title("Automation Exercise - All Products")
+    expect(page.locator(".features_items")).to_be_visible()
+    page.get_by_role("link", name="View Product").nth(0).click()
+    expect(page.locator(".product-details")).to_be_visible()    
+    expect(page.locator(".product-information h2")).to_be_visible()
+    expect(page.get_by_text("Category:")).to_be_visible()
+    expect(page.get_by_text("Rs.")).to_be_visible()
+    expect(page.get_by_text("Availability:")).to_be_visible()
+    expect(page.get_by_text("Condition:")).to_be_visible()
+    expect(page.get_by_text("Brand:")).to_be_visible()
+
 
 
 """ Test Case 9: Search Product
@@ -256,8 +272,24 @@ def test7(page: Page):
         7. Verify 'SEARCHED PRODUCTS' is visible
         8. Verify all the products related to search are visible
 """
-#def test9(page: Page):
-#    page.goto("https://automationexercise.com")
+def test9(page: Page):
+    page.goto("https://automationexercise.com")
+    if "#google_vignette" in page.url:
+        page.goto("https://automationexercise.com/test_cases")
+    expect(page).to_have_title("Automation Exercise")  
+    page.get_by_role("link", name="Products").click()
+    expect(page).to_have_title("Automation Exercise - All Products")
+    product = "Premium Polo T-Shirts"
+    page.get_by_placeholder("Search Product").fill(product)
+    page.locator("#submit_search").click()
+    expect(page.locator("h2:has-text('Searched Products')")).to_be_visible()
+
+    nombres_productos = page.locator(".productinfo p")
+    items = nombres_productos.all()
+    for item in items:
+        expect(item).to_be_visible()
+        expect(item).to_contain_text("Polo", ignore_case=True)   
+
 
 
 """ Test Case 10: Verify Subscription in home page
@@ -269,8 +301,14 @@ def test7(page: Page):
         6. Enter email address in input and click arrow button
         7. Verify success message 'You have been successfully subscribed!' is visible
 """
-#def test10(page: Page):
-#    page.goto("https://automationexercise.com")
+def test10(page: Page):
+    check(page)
+    page.get_by_text("Subscription").scroll_into_view_if_needed()
+    expect(page.locator("h2:has-text('Subscription')")).to_be_visible()
+    page.get_by_placeholder("Your email address").fill("somefeikymail@gmail.com")
+    page.locator("#subscribe").click()
+    expect(page.get_by_text("You have been successfully subscribed!")).to_be_visible()
+
 
 
 """ Test Case 11: Verify Subscription in Cart page
@@ -283,8 +321,15 @@ def test7(page: Page):
         7. Enter email address in input and click arrow button
         8. Verify success message 'You have been successfully subscribed!' is visible
 """
-#def test11(page: Page):
-#    page.goto("https://automationexercise.com")
+def test11(page: Page):
+    check(page)
+    page.get_by_role("link", name="Cart").click()
+    page.get_by_text("Subscription").scroll_into_view_if_needed()
+    expect(page.locator("h2:has-text('Subscription')")).to_be_visible()
+    page.get_by_placeholder("Your email address").fill("somefeikymail@gmail.com")
+    page.locator("#subscribe").click()
+    expect(page.get_by_text("You have been successfully subscribed!")).to_be_visible()
+
 
 
 """ Test Case 12: Add Products in Cart
@@ -299,8 +344,36 @@ def test7(page: Page):
         9. Verify both products are added to Cart
         10. Verify their prices, quantity and total price
 """
-#def test12(page: Page):
-#    page.goto("https://automationexercise.com")
+def test12(page: Page):
+    check(page)
+    page.get_by_role("link", name="Products").click()
+
+    first_prod = page.locator(".single-products").nth(0)
+    first_prod.hover()
+    first_prod.locator(".overlay-content .add-to-cart").click()
+
+    page.get_by_role("button", name="Continue Shopping").click()   
+
+    second_prod = page.locator(".single-products").nth(1)
+    second_prod.hover()
+    second_prod.locator(".overlay-content .add-to-cart").click()
+
+    page.get_by_role("link", name="View Cart").click()   
+
+    products = page.locator("tbody tr")
+    expect(products).to_have_count(2)
+
+    p1 = products.nth(0)
+    expect(p1.locator(".cart_price")).to_contain_text("Rs. 500")
+    expect(p1.locator(".cart_quantity")).to_have_text("1")
+    expect(p1.locator(".cart_total")).to_contain_text("Rs. 500")
+    
+    
+    p2 = products.nth(1)
+    expect(p2.locator(".cart_price")).to_contain_text("Rs. 400")
+    expect(p2.locator(".cart_quantity")).to_have_text("1")
+    expect(p2.locator(".cart_total")).to_contain_text("Rs. 400")
+
 
 
 """ Test Case 13: Verify Product quantity in Cart
@@ -314,15 +387,27 @@ def test7(page: Page):
         8. Click 'View Cart' button
         9. Verify that product is displayed in cart page with exact quantity
 """
-#def test13(page: Page):
-#    page.goto("https://automationexercise.com")
+def test13(page: Page):
+    check(page)
+    idx = random.randint(0, 32)
+    page.get_by_text("View Product").nth(idx).click()
+    
+    expect(page.locator(".product-details")).to_be_visible()    
+    expect(page.locator(".product-information h2")).to_be_visible()
+    expect(page.get_by_text("Category:")).to_be_visible()
+    expect(page.get_by_text("Rs.")).to_be_visible()
+    expect(page.get_by_text("Availability:")).to_be_visible()
+    expect(page.get_by_text("Condition:")).to_be_visible()
+    expect(page.get_by_text("Brand:")).to_be_visible()
+    page.locator("#quantity").fill("4")
+
 
 
 """ Test Case 14: Place Order: Register while Checkout
         1. Launch browser
         2. Navigate to url 'http://automationexercise.com'
         3. Verify that home page is visible successfully
-        4. Add products to cart
+        4.ddress Deta Add products to cart
         5. Click 'Cart' button
         6. Verify that cart page is displayed
         7. Click Proceed To Checkout
@@ -330,9 +415,9 @@ def test7(page: Page):
         9. Fill all details in Signup and create account
         10. Verify 'ACCOUNT CREATED!' and click 'Continue' button
         11. Verify ' Logged in as username' at top
-        12.Click 'Cart' button
+        12. Click 'Cart' button
         13. Click 'Proceed To Checkout' button
-        14. Verify Address Details and Review Your Order
+        14. Verify Ails and Review Your Order
         15. Enter description in comment text area and click 'Place Order'
         16. Enter payment details: Name on Card, Card Number, CVC, Expiration date
         17. Click 'Pay and Confirm Order' button
@@ -340,8 +425,50 @@ def test7(page: Page):
         19. Click 'Delete Account' button
         20. Verify 'ACCOUNT DELETED!' and click 'Continue' button
 """
-#def test14(page: Page):
-#    page.goto("https://automationexercise.com")
+def test14(page: Page):
+    check(page)
+
+    collected = set()
+    for i in range(0, 2):
+        idx = random.randint(0, 32)
+        while idx in collected:
+            idx = random.randint(0, 32)
+        collected.add(idx)
+        prod = page.locator(".single-products").nth(idx)
+        prod.scroll_into_view_if_needed()
+        prod.hover()
+        prod.locator(".overlay-content .add-to-cart").click()
+        page.get_by_role("button", name="Continue Shopping").click()
+
+    page.get_by_role("link", name="Cart").click()
+    expect(page.locator("tbody tr")).to_have_count(2)
+    page.get_by_text("Proceed To Checkout").click()
+    page.locator("#checkoutModal").get_by_role("link", name="Register / Login").click()
+
+    data_user = create_user(page)
+    page.get_by_role("link", name="Cart").click()
+    page.locator(".check_out").click()
+
+    expect(page.locator("#address_delivery .address_firstname")).to_contain_text(data_user["name"], ignore_case=True)
+    expect(page.locator("#address_delivery").locator(".address_address1").nth(1)).to_contain_text(data_user["name"])
+    
+    combined_line = page.locator("#address_delivery").locator(".address_city")
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+
+    page.locator("textarea[name='message']").fill("No comments.")
+    page.get_by_role("link", name="Place Order").click()
+
+    page.locator("[data-qa='name-on-card']").fill(data_user["name"])
+    page.locator("[data-qa='card-number']").fill(data_user["card_number"]) 
+    page.locator("[data-qa='cvc']").fill(data_user["card_cvv"])
+    page.locator("[data-qa='expiry-month']").fill(data_user["card_expire"].split("/")[0])
+    page.locator("[data-qa='expiry-year']").fill(data_user["card_expire"].split("/")[1])
+    page.locator("#submit").click()
+    expect(page.get_by_text("Congratulations! Your order has been confirmed!")).to_be_visible()
+    page.get_by_role("link", name="Delete Account").click()
+    expect(page.get_by_role("heading", name="ACCOUNT DELETED!", exact=False)).to_be_visible()
 
 
 """ Test Case 15: Place Order: Register before Checkout
@@ -364,8 +491,47 @@ def test7(page: Page):
         17. Click 'Delete Account' button
         18. Verify 'ACCOUNT DELETED!' and click 'Continue' button
 """
-#def test15(page: Page):
-#    page.goto("https://automationexercise.com")
+def test15(page: Page):
+    check(page)
+    page.get_by_role("link", name="Signup / Login").click()
+    data_user = create_user(page)
+
+    collected = set()
+    for i in range(0, 2):
+        idx = random.randint(0, 32)
+        while idx in collected:
+            idx = random.randint(0, 32)
+        collected.add(idx)
+        prod = page.locator(".single-products").nth(idx)
+        prod.scroll_into_view_if_needed()
+        prod.hover()
+        prod.locator(".overlay-content .add-to-cart").click()
+        page.get_by_role("button", name="Continue Shopping").click()
+    
+    page.get_by_role("link", name="Cart").click()
+    expect(page.locator("tbody tr")).to_have_count(2)
+    page.get_by_text("Proceed To Checkout").click()
+
+    expect(page.locator("#address_delivery .address_firstname")).to_contain_text(data_user["name"], ignore_case=True)
+    expect(page.locator("#address_delivery").locator(".address_address1").nth(1)).to_contain_text(data_user["name"])
+    
+    combined_line = page.locator("#address_delivery").locator(".address_city")
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+
+    page.locator("textarea[name='message']").fill("No comments.")
+    page.get_by_role("link", name="Place Order").click()
+
+    page.locator("[data-qa='name-on-card']").fill(data_user["name"])
+    page.locator("[data-qa='card-number']").fill(data_user["card_number"]) 
+    page.locator("[data-qa='cvc']").fill(data_user["card_cvv"])
+    page.locator("[data-qa='expiry-month']").fill(data_user["card_expire"].split("/")[0])
+    page.locator("[data-qa='expiry-year']").fill(data_user["card_expire"].split("/")[1])
+    page.locator("#submit").click()
+    expect(page.get_by_text("Congratulations! Your order has been confirmed!")).to_be_visible()
+    page.get_by_role("link", name="Delete Account").click()
+    expect(page.get_by_role("heading", name="ACCOUNT DELETED!", exact=False)).to_be_visible()
 
 
 """ Test Case 16: Place Order: Login before Checkout
@@ -387,8 +553,56 @@ def test7(page: Page):
         16. Click 'Delete Account' button
         17. Verify 'ACCOUNT DELETED!' and click 'Continue' button
 """
-#def test16(page: Page):
-#    page.goto("https://automationexercise.com")
+def test16(browser): 
+    context1 = browser.new_context()
+    page1 = context1.new_page()
+    page1.goto("https://automationexercise.com/login")
+    data_user = create_user(page1) 
+    context1.close()
+    context2 = browser.new_context()
+    page = context2.new_page()
+    page.goto("https://automationexercise.com/login")
+    page.locator(".login-form [data-qa='login-email']").fill(data_user["email"])
+    page.locator(".login-form [data-qa='login-password']").fill(data_user["password"])
+    page.get_by_role("button", name="Login").click()
+    expect(page.get_by_text(f"Logged in as {data_user['name']}")).to_be_visible()
+
+    collected = set()
+    for i in range(0, 2):
+        idx = random.randint(0, 32)
+        while idx in collected:
+            idx = random.randint(0, 32)
+        collected.add(idx)
+        prod = page.locator(".single-products").nth(idx)
+        prod.scroll_into_view_if_needed()
+        prod.hover()
+        prod.locator(".overlay-content .add-to-cart").click()
+        page.get_by_role("button", name="Continue Shopping").click()
+
+    page.get_by_role("link", name="Cart").click()
+    expect(page.locator("tbody tr")).to_have_count(2)
+    page.get_by_text("Proceed To Checkout").click()
+    expect(page.locator("#address_delivery .address_firstname")).to_contain_text(data_user["name"], ignore_case=True)
+    expect(page.locator("#address_delivery").locator(".address_address1").nth(1)).to_contain_text(data_user["name"])
+    
+    combined_line = page.locator("#address_delivery").locator(".address_city")
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+    expect(combined_line).to_contain_text(data_user["name"])
+
+    page.locator("textarea[name='message']").fill("No comments.")
+    page.get_by_role("link", name="Place Order").click()
+
+    page.locator("[data-qa='name-on-card']").fill(data_user["name"])
+    page.locator("[data-qa='card-number']").fill(data_user["card_number"]) 
+    page.locator("[data-qa='cvc']").fill(data_user["card_cvv"])
+    page.locator("[data-qa='expiry-month']").fill(data_user["card_expire"].split("/")[0])
+    page.locator("[data-qa='expiry-year']").fill(data_user["card_expire"].split("/")[1])
+    page.locator("#submit").click()
+    expect(page.get_by_text("Congratulations! Your order has been confirmed!")).to_be_visible()
+    page.get_by_role("link", name="Delete Account").click()
+    expect(page.get_by_role("heading", name="ACCOUNT DELETED!", exact=False)).to_be_visible()     
+
 
 
 """ Test Case 17: Remove Products From Cart
@@ -401,8 +615,30 @@ def test7(page: Page):
         7. Click 'X' button corresponding to particular product
         8. Verify that product is removed from the cart
 """
-#def test17(page: Page):
-#    page.goto("https://automationexercise.com")
+def test17(page: Page):
+    check(page)
+    collected = set()
+    for i in range(0, 2):
+        idx = random.randint(0, 32)
+        while idx in collected:
+            idx = random.randint(0, 32)
+        collected.add(idx)
+        prod = page.locator(".single-products").nth(idx)
+        prod.scroll_into_view_if_needed()
+        prod.hover()
+        prod.locator(".overlay-content .add-to-cart").click()
+        page.get_by_role("button", name="Continue Shopping").click()
+
+    page.get_by_role("link", name="Cart").click()
+    expect(page.locator("tbody tr")).to_have_count(2)
+
+    cart_rows = page.locator("tbody tr")
+    total_items = cart_rows.count()
+    random_index = random.randint(0, total_items - 1)
+    target_row = cart_rows.nth(random_index)
+    target_row.locator(".cart_quantity_delete").click()
+    expect(target_row).to_be_hidden()
+
 
 
 """ Test Case 18: View Category Products
@@ -415,8 +651,18 @@ def test7(page: Page):
         7. On left side bar, click on any sub-category link of 'Men' category
         8. Verify that user is navigated to that category page
 """
-#def test18(page: Page):
-#    page.goto("https://automationexercise.com")
+def test18(page: Page): # hacer dinámico
+    check(page)
+    expect(page.locator("h2:has-text('Category')")).to_be_visible()
+
+    page.locator("#accordian").get_by_role("link", name="Women").click()
+    page.get_by_role("link", name="Dress").click()
+    expect(page.locator("h2:has-text('Women - Dress Products')")).to_be_visible()
+
+    page.locator("a[href='#Men']").click()
+    page.get_by_role("link", name="Jeans").click()
+    expect(page.locator("h2:has-text('Men - Jeans Products')")).to_be_visible()
+
 
 
 """ Test Case 19: View & Cart Brand Products
@@ -429,8 +675,17 @@ def test7(page: Page):
         7. On left side bar, click on any other brand link
         8. Verify that user is navigated to that brand page and can see products
 """
-#def test19(page: Page):
-#    page.goto("https://automationexercise.com")
+def test19(page: Page): 
+    check(page)
+    page.get_by_role("link", name="Products").click()
+    expect(page.locator(".brands_products")).to_be_visible()
+    page.get_by_role("link", name="Polo").click() # hacer dinamico
+    expect(page.locator("h2:has-text('Brand - Polo Products')")).to_be_visible()
+    expect(page).to_have_url(re.compile(rf".*/brand_products/Polo"))
+    expect(page.locator("h2.title")).to_contain_text("BRAND - POLO PRODUCTS", ignore_case=True)
+    productos_renderizados = page.locator(".single-products")
+    expect(productos_renderizados.first).to_be_visible()
+
 
 
 """ Test Case 20: Search Products and Verify Cart After Login
@@ -447,8 +702,26 @@ def test7(page: Page):
         11. Again, go to Cart page
         12. Verify that those products are visible in cart after login as well
 """
-#def test20(page: Page):
-#    page.goto("https://automationexercise.com")
+def test20(page: Page):
+    check(page)
+    page.get_by_role("link", name="Products").click()
+    expect(page.locator("h2:has-text('All Products')")).to_be_visible()
+    expect(page).to_have_url(re.compile(rf".*/products"))
+    productos_renderizados = page.locator(".single-products")
+    expect(productos_renderizados.first).to_be_visible()
+    product = page.locator(".single-products p").first.inner_text()
+    page.get_by_placeholder("Search Product").fill(product)
+    page.locator("#submit_search").click()
+    expect(page.locator("h2:has-text('SEARCHED PRODUCT')")).to_be_visible()
+    actual = page.locator(".single-products p").first.inner_text()
+    assert actual == product # ??
+    
+    prod = page.locator(".single-products").nth(0)
+    prod.scroll_into_view_if_needed()
+    prod.hover()
+    prod.locator(".overlay-content .add-to-cart").click()
+    page.get_by_role("button", name="Continue Shopping").click() 
+    page.get_by_role("link", name="Cart").click()
 
 
 """ Test Case 21: Add review on product
@@ -462,8 +735,8 @@ def test7(page: Page):
         8. Click 'Submit' button
         9. Verify success message 'Thank you for your review.'
 """
-#def test21(page: Page):
-#    page.goto("https://automationexercise.com")
+def test21(page: Page):
+    check(page)
 
 
 """ Test Case 22: Add to cart from Recommended items
@@ -475,8 +748,8 @@ def test7(page: Page):
         6. Click on 'View Cart' button
         7. Verify that product is displayed in cart page
 """
-#def test22(page: Page):
-#    page.goto("https://automationexercise.com")
+def test22(page: Page):
+    check(page)
 
 
 """ Test Case 23: Verify address details in checkout page
@@ -496,8 +769,8 @@ def test7(page: Page):
         14. Click 'Delete Account' button
         15. Verify 'ACCOUNT DELETED!' and click 'Continue' button
 """
-#def test23(page: Page):
-#    page.goto("https://automationexercise.com")
+def test23(page: Page):
+    check(page)
 
 
 """ Test Case 24: Download Invoice after purchase order
@@ -512,7 +785,7 @@ def test7(page: Page):
         9. Fill all details in Signup and create account
         10. Verify 'ACCOUNT CREATED!' and click 'Continue' button
         11. Verify ' Logged in as username' at top
-        12.Click 'Cart' button
+        12. Click 'Cart' button
         13. Click 'Proceed To Checkout' button
         14. Verify Address Details and Review Your Order
         15. Enter description in comment text area and click 'Place Order'
@@ -524,8 +797,8 @@ def test7(page: Page):
         21. Click 'Delete Account' button
         22. Verify 'ACCOUNT DELETED!' and click 'Continue' button
 """
-#def test24(page: Page):
-#    page.goto("https://automationexercise.com")
+def test24(page: Page):
+    check(page)
 
 
 """ Test Case 25: Verify Scroll Up using 'Arrow' button and Scroll Down functionality
@@ -537,8 +810,8 @@ def test7(page: Page):
         6. Click on arrow at bottom right side to move upward
         7. Verify that page is scrolled up and 'Full-Fledged practice website for Automation Engineers' text is visible on screen
 """
-#def test25(page: Page):
-#    page.goto("https://automationexercise.com")
+def test25(page: Page):
+    check(page)
 
 
 """ Test Case 26: Verify Scroll Up without 'Arrow' button and Scroll Down functionality
@@ -550,8 +823,8 @@ def test7(page: Page):
         6. Scroll up page to top
         7. Verify that page is scrolled up and 'Full-Fledged practice website for Automation Engineers' text is visible on screen
 """
-#def test26(page: Page):
-#    page.goto("https://automationexercise.com")
+def test26(page: Page):
+    check(page)
 
     
 
